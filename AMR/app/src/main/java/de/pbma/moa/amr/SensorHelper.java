@@ -5,17 +5,23 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.Toast;
 
 public class SensorHelper implements SensorEventListener {
     private SensorManager sensorManager;
-    private Sensor sensor;
-    private final float[] accelerometerReading = new float[3];
-    private final float[] magnetometerReading = new float[3];
 
     private final float[] rotationMatrix = new float[9];
     private final float[] orientationAngles = new float[3];
-    private Context ctx;
+    private final Context ctx;
+
+    private String text = "0";
+
+    float lastAzimuth = 0;
+    private float[] lastAccelerometerValues = new float[3];
+    private float[] lastMagnetometerValues = new float[3];
 
 
     public SensorHelper(SensorManager sm, Context context){
@@ -23,46 +29,60 @@ public class SensorHelper implements SensorEventListener {
         sensorManager = sm;
 
         Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        if (accelerometer != null) {
-            sensorManager.registerListener(this, accelerometer,
-                    SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI);
-        }
-        Sensor magneticField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        if (magneticField != null) {
-            sensorManager.registerListener(this, magneticField,
-                    SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI);
-        }
 
-    }
+        Sensor accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-
-    private void run(){
-        new Thread(()->{
-
-        }).start();
+        sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, magnetometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, accelerometerReading,
-                    0, accelerometerReading.length);
+            System.arraycopy(event.values, 0, lastAccelerometerValues, 0, event.values.length);
         } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, magnetometerReading,
-                    0, magnetometerReading.length);
+            System.arraycopy(event.values, 0, lastMagnetometerValues, 0, event.values.length);
         }
 
-        updateOrientationAngles();
+        if (lastAccelerometerValues != null && lastMagnetometerValues != null) {
+            SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometerValues, lastMagnetometerValues);
+            SensorManager.getOrientation(rotationMatrix, orientationAngles);
+
+            float azimuth = (float) Math.toDegrees(orientationAngles[0]);
+            if (azimuth < 0) {
+                azimuth += 360;
+            }
+
+            float deltaAzimuth = Math.abs(azimuth - lastAzimuth);
+            if (deltaAzimuth > 1.0f) { // Threshold for detecting a significant change
+                lastAzimuth = azimuth;
+                String heading = getHeadingText(azimuth);
+                Log.d("Compass", "Himmelsrichtung: " + heading);
+            }
+        }
     }
 
-    public void updateOrientationAngles() {
-        // Update rotation matrix, which is needed to update orientation angles.
-        SensorManager.getRotationMatrix(rotationMatrix, null,
-                accelerometerReading, magnetometerReading);
-        // "rotationMatrix" now has up-to-date information.
-        SensorManager.getOrientation(rotationMatrix, orientationAngles);
-
-        Toast.makeText(ctx, String.valueOf(orientationAngles[0]) + " " + String.valueOf(orientationAngles[1]) + " " + String.valueOf(orientationAngles[2]), Toast.LENGTH_SHORT).show();
+    private String getHeadingText(float azimuth) {
+        if (azimuth >= 337.5 || azimuth < 22.5) {
+            return "N";
+        } else if (azimuth >= 22.5 && azimuth < 67.5) {
+            return "NE";
+        } else if (azimuth >= 67.5 && azimuth < 112.5) {
+            return "E";
+        } else if (azimuth >= 112.5 && azimuth < 157.5) {
+            return "SE";
+        } else if (azimuth >= 157.5 && azimuth < 202.5) {
+            return "S";
+        } else if (azimuth >= 202.5 && azimuth < 247.5) {
+            return "SW";
+        } else if (azimuth >= 247.5 && azimuth < 292.5) {
+            return "W";
+        } else if (azimuth >= 292.5 && azimuth < 337.5) {
+            return "NW";
+        } else {
+            return "";
+        }
     }
 
 

@@ -6,9 +6,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
-import android.widget.Toast;
 
 public class SensorHelper implements SensorEventListener {
     private SensorManager sensorManager;
@@ -17,18 +14,14 @@ public class SensorHelper implements SensorEventListener {
     private final float[] orientationAngles = new float[3];
     private final Context ctx;
 
-    private String text = "0";
-
     float lastAzimuth = 0;
-    private float[] lastAccelerometerValues = new float[3];
-    private float[] lastMagnetometerValues = new float[3];
+    private final float[] lastAccelerometerValues = new float[3];
+    private final float[] lastMagnetometerValues = new float[3];
 
 
     public SensorHelper(SensorManager sm, Context context){
         ctx = context;
         sensorManager = sm;
-
-        Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         Sensor accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Sensor magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);

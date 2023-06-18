@@ -8,61 +8,82 @@ import android.hardware.SensorManager;
 import android.widget.Toast;
 
 public class SensorHelper implements SensorEventListener {
-    private SensorManager sensorManager;
 
     private final float[] rotationMatrix = new float[9];
     private final float[] orientationAngles = new float[3];
-    private final Context ctx;
-
     float lastAzimuth = 0;
     private final float[] lastAccelerometerValues = new float[3];
     private final float[] lastMagnetometerValues = new float[3];
 
 
-    public SensorHelper(SensorManager sm, Context context){
-        ctx = context;
-        sensorManager = sm;
-
-        Sensor accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        Sensor magnetometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
-        sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(this, magnetometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    public SensorHelper(SensorManager sm) {
+        Sensor accelerometerSensor = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor magnetometerSensor = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        sm.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sm.registerListener(this, magnetometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, lastAccelerometerValues, 0, event.values.length);
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, lastMagnetometerValues, 0, event.values.length);
-        }
+        new Thread(()->{
+            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                System.arraycopy(event.values, 0, lastAccelerometerValues, 0, event.values.length);
+            } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+                System.arraycopy(event.values, 0, lastMagnetometerValues, 0, event.values.length);
+            }
 
-        if (lastAccelerometerValues != null && lastMagnetometerValues != null) {
             SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometerValues, lastMagnetometerValues);
             SensorManager.getOrientation(rotationMatrix, orientationAngles);
 
-            float azimuth = (float) Math.toDegrees(orientationAngles[0]);
-            if (azimuth < 0) {
-                azimuth += 360;
+            if (phoneIsVertical()) {
+                float azimuth = (float) Math.toDegrees(orientationAngles[0]);
+                if (azimuth < 0) {
+                    azimuth += 360;
+                }
+                float deltaAzimuth = Math.abs(azimuth - lastAzimuth);
+                if (deltaAzimuth > 15.0f) { // Threshold for detecting a significant change
+                    sendHorizontalDelta(azimuth);
+                    lastAzimuth = azimuth;
+                }
             }
+        }).start();
+    }
 
-            float deltaAzimuth = Math.abs(azimuth - lastAzimuth);
-            if (deltaAzimuth > 5.0f) { // Threshold for detecting a significant change
-                sendHorizontalDelta(azimuth);
-                lastAzimuth = azimuth;
-            }
-        }
+    private boolean phoneIsVertical() {
+        float pitch = (float) Math.toDegrees(orientationAngles[1]); // Neigung in Grad
+        float roll = (float) Math.toDegrees(orientationAngles[2]); // Rollen in Grad
+
+        // Überprüfen, ob das Gerät flach liegt (nahezu parallel zum Boden)
+        return Math.abs(pitch) < 10 && Math.abs(roll) > 75 && Math.abs(roll) < 105;
     }
 
     private void sendHorizontalDelta(float azimuth) {
         float realDelta = azimuth - lastAzimuth;
+        int valToSend = deltaToValue(Math.abs(realDelta));
         if(realDelta<0){
-            Toast.makeText(ctx, "links", Toast.LENGTH_SHORT).show();
+            valToSend *= -1;
         }
-        else {
-            Toast.makeText(ctx, "rechts", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(ctx, String.valueOf(realDelta), Toast.LENGTH_SHORT).show();
+    }
+
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    private int deltaToValue(float del){
+        if(del < 20){
+            return 1;
+        } else if (del < 25) {
+            return 2;
+        } else if (del < 30) {
+            return 3;
+        } else if(del < 40){
+            return 4;
         }
+        return 0; //abnorme werte aussortieren
+    }
+}
 
 
 
@@ -85,11 +106,3 @@ public class SensorHelper implements SensorEventListener {
         } else {
             return "";
         }*/
-    }
-
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-}

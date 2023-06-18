@@ -5,7 +5,6 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.SurfaceHolder;
@@ -37,7 +36,7 @@ public class ScreenActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.stream_layout);
-        SensorHelper sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
+        SensorHelper sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE));
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();

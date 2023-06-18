@@ -14,4 +14,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "AMR"
 include ':app'
-include ':opencvsdk'

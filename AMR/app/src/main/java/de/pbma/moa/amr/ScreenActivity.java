@@ -31,15 +31,13 @@ public class ScreenActivity extends AppCompatActivity {
     private Button startButton;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
-    private SensorHelper sensorHelper;
-
 
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.stream_layout);
-        sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
+        SensorHelper sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();

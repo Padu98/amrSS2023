@@ -5,7 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.Log;
+import android.widget.Toast;
 
 public class SensorHelper implements SensorEventListener {
     private SensorManager sensorManager;
@@ -48,16 +48,25 @@ public class SensorHelper implements SensorEventListener {
             }
 
             float deltaAzimuth = Math.abs(azimuth - lastAzimuth);
-            if (deltaAzimuth > 1.0f) { // Threshold for detecting a significant change
+            if (deltaAzimuth > 5.0f) { // Threshold for detecting a significant change
+                sendHorizontalDelta(azimuth);
                 lastAzimuth = azimuth;
-                String heading = getHeadingText(azimuth);
-                Log.d("Compass", "Himmelsrichtung: " + heading);
             }
         }
     }
 
-    private String getHeadingText(float azimuth) {
-        if (azimuth >= 337.5 || azimuth < 22.5) {
+    private void sendHorizontalDelta(float azimuth) {
+        float realDelta = azimuth - lastAzimuth;
+        if(realDelta<0){
+            Toast.makeText(ctx, "links", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(ctx, "rechts", Toast.LENGTH_SHORT).show();
+        }
+
+
+
+       /* if (azimuth >= 337.5 || azimuth < 22.5) {
             return "N";
         } else if (azimuth >= 22.5 && azimuth < 67.5) {
             return "NE";
@@ -75,7 +84,7 @@ public class SensorHelper implements SensorEventListener {
             return "NW";
         } else {
             return "";
-        }
+        }*/
     }
 
 

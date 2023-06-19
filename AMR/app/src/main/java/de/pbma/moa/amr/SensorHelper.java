@@ -5,23 +5,42 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 import android.widget.Toast;
+
+import com.google.android.material.tabs.TabLayout;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class SensorHelper implements SensorEventListener {
 
     private final float[] rotationMatrix = new float[9];
     private final float[] orientationAngles = new float[3];
     float lastAzimuth = 0;
+    float oldRoll = 0;
     private final float[] lastAccelerometerValues = new float[3];
     private final float[] lastMagnetometerValues = new float[3];
+    private final MQTTLogic mqttLogic;
+    private boolean mqttReady;
 
 
     public SensorHelper(SensorManager sm) {
+        mqttLogic = new MQTTLogic();
+        mqttLogic.registerMQTTListener(mqttListener);
+        mqttLogic.connect();
         Sensor accelerometerSensor = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Sensor magnetometerSensor = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         sm.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
         sm.registerListener(this, magnetometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
+
+    private final MQTTListener mqttListener = new MQTTListener() {
+        @Override
+        public void onConnected() {
+            mqttReady = true;
+        }
+    };
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -35,6 +54,7 @@ public class SensorHelper implements SensorEventListener {
             SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometerValues, lastMagnetometerValues);
             SensorManager.getOrientation(rotationMatrix, orientationAngles);
 
+            sendVerticalDirection();
             if (phoneIsVertical()) {
                 float azimuth = (float) Math.toDegrees(orientationAngles[0]);
                 if (azimuth < 0) {
@@ -54,16 +74,45 @@ public class SensorHelper implements SensorEventListener {
         float roll = (float) Math.toDegrees(orientationAngles[2]); // Rollen in Grad
 
         // Überprüfen, ob das Gerät flach liegt (nahezu parallel zum Boden)
-        return Math.abs(pitch) < 10 && Math.abs(roll) > 75 && Math.abs(roll) < 105;
+        return Math.abs(pitch) < 15 && Math.abs(roll) > 75 && Math.abs(roll) < 105;
     }
 
     private void sendHorizontalDelta(float azimuth) {
+        if(!mqttReady){
+            Log.e("Test", "mqtt is not ready jet!");
+            return;
+        }
         float realDelta = azimuth - lastAzimuth;
         int valToSend = deltaToValue(Math.abs(realDelta));
         if(realDelta<0){
             valToSend *= -1;
+            JSONObject json = new JSONObject();
+            try {
+                json.put("horizontal", valToSend);
+                mqttLogic.send("amr/data", json.toString());
+            }catch (JSONException ex){
+                Log.e("Test", "json fail");
+            }
         }
-        //Toast.makeText(ctx, String.valueOf(realDelta), Toast.LENGTH_SHORT).show();
+    }
+
+    private void sendVerticalDirection(){
+        if(!mqttReady){
+            Log.e("Test", "mqtt is not ready jet!");
+            return;
+        }
+        float pitch = (float) Math.toDegrees(orientationAngles[1]); // Neigung in Grad
+        float roll = (float) Math.toDegrees(orientationAngles[2]); // Rollen in Grad
+        if(Math.abs(pitch) < 15 && (roll < oldRoll-15 || roll > oldRoll +15)){
+            oldRoll = roll;
+            JSONObject json = new JSONObject();
+            try {
+                json.put("horizontal",  roll);
+                mqttLogic.send("amr/data", json.toString());
+            }catch (JSONException ex){
+                Log.e("Test", "json fail");
+            }
+        }
     }
 
 

@@ -107,7 +107,7 @@ public class SensorHelper implements SensorEventListener {
             oldRoll = roll;
             JSONObject json = new JSONObject();
             try {
-                json.put("horizontal",  roll);
+                json.put("vertical",  roll);
                 mqttLogic.send("amr/data", json.toString());
             }catch (JSONException ex){
                 Log.e("Test", "json fail");

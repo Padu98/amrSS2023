@@ -36,3 +36,15 @@ zum Starten des Skriptes:
 ```
 ros2 run my_package your_script.py
 ```
+
+Eventuell: https://www.youtube.com/watch?v=LAizFTTdL8o
+```
+git clone https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+cd DynmixelSDK
+sudo python3 setup.py install
+```
+
+zum testen:
+```
+cd DynamixelSDK/python/tests/protocol2_0
+```

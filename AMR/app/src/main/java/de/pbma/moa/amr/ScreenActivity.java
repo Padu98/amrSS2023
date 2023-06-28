@@ -1,6 +1,7 @@
 package de.pbma.moa.amr;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,15 +29,16 @@ public class ScreenActivity extends AppCompatActivity {
     private boolean isStreaming;
     private ScreenHelper screenHelper;
     private Button startButton;
+    private Button settingsButton;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
+    private SensorHelper sensorHelper;
 
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.stream_layout);
-        SensorHelper sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE));
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
@@ -47,6 +49,12 @@ public class ScreenActivity extends AppCompatActivity {
         isStreaming = false;
         screenHelper = new ScreenHelper();
         startButton = findViewById(R.id.start_button);
+        settingsButton = findViewById(R.id.settings_button);
+
+        settingsButton.setOnClickListener(v ->{
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+        });
         surfaceView = findViewById(R.id.surfaceView);
         surfaceHolder = surfaceView.getHolder();
         startButton.setOnClickListener(listener);
@@ -57,6 +65,7 @@ public class ScreenActivity extends AppCompatActivity {
 
     private void start() {
         if (isStreaming) {
+            sensorHelper = null;
             Toast.makeText(this, "stop", Toast.LENGTH_LONG).show();
             isStreaming = false;
             startButton.setText("start");
@@ -64,6 +73,7 @@ public class ScreenActivity extends AppCompatActivity {
                 socket.close();
             }
         } else {
+            sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
             isStreaming = true;
             startButton.setText("stop");
             new Thread(() -> {
@@ -97,9 +107,9 @@ public class ScreenActivity extends AppCompatActivity {
             }
             socket.close();
         } catch (Exception e) {
-            this.runOnUiThread(() -> {
-                Toast.makeText(this, "fail", Toast.LENGTH_LONG).show();
-            });
+           // this.runOnUiThread(() -> {
+           //     Toast.makeText(this, "fail", Toast.LENGTH_LONG).show();
+           // });
             e.printStackTrace();
         }
     }

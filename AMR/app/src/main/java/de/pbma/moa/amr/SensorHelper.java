@@ -13,6 +13,8 @@ import com.google.android.material.tabs.TabLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+
 public class SensorHelper implements SensorEventListener {
 
     private final float[] rotationMatrix = new float[9];
@@ -25,8 +27,8 @@ public class SensorHelper implements SensorEventListener {
     private boolean mqttReady;
 
 
-    public SensorHelper(SensorManager sm) {
-        mqttLogic = new MQTTLogic();
+    public SensorHelper(SensorManager sm, Context ctx) {
+        mqttLogic = new MQTTLogic(ctx);
         mqttLogic.registerMQTTListener(mqttListener);
         mqttLogic.connect();
         Sensor accelerometerSensor = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -44,6 +46,10 @@ public class SensorHelper implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        if(Arrays.equals(event.values, lastAccelerometerValues) || Arrays.equals(event.values, lastMagnetometerValues)){
+            //Log.e("Test", "same values");
+            return;
+        }
         new Thread(()->{
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 System.arraycopy(event.values, 0, lastAccelerometerValues, 0, event.values.length);
@@ -82,7 +88,16 @@ public class SensorHelper implements SensorEventListener {
             Log.e("Test", "mqtt is not ready jet!");
             return;
         }
-        float realDelta = azimuth - lastAzimuth;
+        //neu
+        try {
+            JSONObject json = new JSONObject();
+            json.put("horizontal", azimuth);
+            mqttLogic.send("amr/data", json.toString());
+        }catch (JSONException ex){
+            Log.e("Test", "json exceptioin azimuth");
+        }
+
+        /*float realDelta = azimuth - lastAzimuth;
         int valToSend = deltaToValue(Math.abs(realDelta));
         if(realDelta<0){
             valToSend *= -1;
@@ -93,7 +108,7 @@ public class SensorHelper implements SensorEventListener {
             }catch (JSONException ex){
                 Log.e("Test", "json fail");
             }
-        }
+        }*/
     }
 
     private void sendVerticalDirection(){

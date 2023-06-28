@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:key="mqtt" app:title="Einstellungen MQTT">
+        <EditTextPreference
+         app:key="mqttAddress"
+         app:title="Adresse"
+            app:useSimpleSummaryProvider="true"
+         app:defaultValue="tcp://test" />
+        <EditTextPreference
+            app:useSimpleSummaryProvider="true"
+            app:key="port"
+            app:title="Port"
+            app:defaultValue="1883" />
+    </PreferenceCategory>
+    <PreferenceCategory app:key="raspi" app:title="Raspberrypi">
+        <EditTextPreference
+            app:key="piIp"
+            app:title="ip"
+            app:useSimpleSummaryProvider="true"
+            app:defaultValue="127.0.0.1" />
+    </PreferenceCategory>
+</androidx.preference.PreferenceScreen>

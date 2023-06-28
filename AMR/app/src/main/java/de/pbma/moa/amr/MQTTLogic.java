@@ -1,6 +1,10 @@
 package de.pbma.moa.amr;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
+
+import androidx.preference.PreferenceManager;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -21,7 +25,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class MQTTLogic {
     private static final String TAG = MQTTLogic.class.getCanonicalName();
-    private static final String BROKER = "";
+    private String BROKER = "";
+    private int PORT = 1883;
     private static final String USERNAME = "amr";
     private static final String PASSWORD = "amr";
     private final ConcurrentSkipListSet<String> subscriptions = new ConcurrentSkipListSet<>();
@@ -33,6 +38,22 @@ public class MQTTLogic {
     private volatile MqttClient mqttClient;
     private final AtomicBoolean blockConnectionRequests = new AtomicBoolean(false);
     private final AtomicBoolean mqttClientConnected = new AtomicBoolean(false);
+
+    public MQTTLogic(Context ctx){
+        PreferenceManager.setDefaultValues(ctx, R.xml.preferences, false);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ctx);
+        BROKER = preferences.getString("mqttAddress", "");
+        PORT = Integer.parseInt(preferences.getString("port", "0"));
+        preferences.registerOnSharedPreferenceChangeListener(onSharedPreferenceChangeListener);
+    }
+
+    SharedPreferences.OnSharedPreferenceChangeListener onSharedPreferenceChangeListener = (sharedPreferences, key) -> {
+        BROKER = sharedPreferences.getString("mqttAddress", "");
+        PORT = Integer.parseInt(sharedPreferences.getString("port", "0"));
+        if(!BROKER.isEmpty() && (PORT == 1883 || PORT == 8883)){
+            MQTTLogic.this.connect();
+        }
+    };
 
     private final MqttCallback mqttCallback = new MqttCallback() {
         @Override
@@ -54,6 +75,10 @@ public class MQTTLogic {
     }
 
     public void connect() {
+        if(BROKER.isEmpty() || (PORT != 1883 && PORT != 8883)){
+            Log.e(TAG, "Broker is empty");
+            return;
+        }
         if (blockConnectionRequests.get() || mqttClientConnected.get()) {
             Log.v(TAG, "Pending Request");
             return;

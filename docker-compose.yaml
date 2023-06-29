@@ -1,4 +1,4 @@
-version: '3'
+version: '3.5'
 
 services:
   mqtt-broker:
@@ -7,15 +7,7 @@ services:
     ports:
       - 8883:8883
       - 1883:1883
-    environment:
-      - MQTT_USERNAME=amr
-      - MQTT_PASSWORD=amr
     volumes:
-      - mosquitto-conf:/mosquitto/config
-      - mosquitto-data:/mosquitto/data
-      - mosquitto-log:/mosquitto/log
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
 
-volumes:
-  mosquitto-conf:
-  mosquitto-data:
-  mosquitto-log:

@@ -7,7 +7,7 @@ def find_camera_index():
     found = False
     while not found:
         capture = cv2.VideoCapture('/dev/video'+str(index), cv2.CAP_V4L)
-        if capture.isOpened() and index != 0:
+        if capture.isOpened():
             found = True
             capture.release()
         else:
@@ -54,7 +54,7 @@ def send_video(index, address, port):
 if __name__ == '__main__':
     index = find_camera_index()
     print('camera: ' + str(index))
-    server_address = '192.168.43.221' 
+    server_address = '192.168.43.228' 
     server_port = 5000
     send_video('/dev/video'+str(index), server_address, server_port)
     #send_video('/dev/video'+str(1), server_address, server_port)

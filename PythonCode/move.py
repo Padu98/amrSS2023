@@ -31,21 +31,22 @@ def subscribe(client: mqtt_client):
      #print("tawda")
      #test = "vertical" in message
      #print(test)
-     #if "vertical" in message:
-        #if message['vertical'] < -140 :
-            #message['vertical'] = -140
-        #if message['vertical'] > -40 :
-            #message['vertical'] = -40
-        #print(message['vertical'])
-        #move(abs(1024+(int(message['vertical'] * 5.69))),3)  #5.69 = 1024/180 muss noch abs machen
-        #print(abs(1024+(int(message['vertical'] * 5.69))))
+     if "vertical" in message:
+        print("message vertical : " + str(message))
+        if message['vertical'] < -140 :
+            message['vertical'] = -140
+        if message['vertical'] > -40 :
+            message['vertical'] = -40
+        print(message['vertical'])
+        move(abs(1023+(int(message['vertical'] * 5.69))),3)  #5.69 = 1024/180 muss noch abs machen
+        #print(abs(1023+(int(message['vertical'] * 5.69))))
      if "horizontal" in message:
-        print('message:  ' + str(message['horizontal']))
+        #print('message:  ' + str(message['horizontal']))
         if message['horizontal'] > 180 and message['horizontal'] < 270:
-            message['horizontal'] = 180
+            message['horizontal'] = 179
         elif message['horizontal'] > 270:
             message['horizontal'] = 0
-        
+        #print(message)
         move(abs((int(message['horizontal'] *5.69))),2)  #5.69 = 1024/180 muss noch abs machen
         #print(abs((int(message['horizontal'] * 5.69))))
    client.subscribe(topic)
@@ -67,7 +68,6 @@ def move(position,ID):
     elif dxl_error != 0:
         print("%s" % packetHandler.getRxPacketError(dxl_error))
     while 1:
-        test = random.randint(0,200)
         # Read present position
         dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, ID, ADDR_MX_PRESENT_POSITION)
         if dxl_comm_result != COMM_SUCCESS:
@@ -75,7 +75,6 @@ def move(position,ID):
         elif dxl_error != 0:
             print("%s" % packetHandler.getRxPacketError(dxl_error))
 
-        print('test')
         print("[ID:%03d] GoalPos:%03d  PresPos:%03d" % (ID, position, dxl_present_position))
         break
 
@@ -96,7 +95,7 @@ PROTOCOL_VERSION            = 1.0               # See which protocol version is 
 # Default setting
 DXL_ID                      = 3                 # Dynamixel ID : 1
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
-DEVICENAME                  = '/dev/ttyUSB0'    # Check which port is being used on your controller
+DEVICENAME                  = '/dev/ttyUSB1'    # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
 TORQUE_ENABLE               = 1                 # Value for enabling the torque

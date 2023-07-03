@@ -54,7 +54,7 @@ def send_video(index, address, port):
 if __name__ == '__main__':
     index = find_camera_index()
     print('camera: ' + str(index))
-    server_address = '192.168.43.228' 
+    server_address = '192.168.43.1' 
     server_port = 5000
     send_video('/dev/video'+str(index), server_address, server_port)
     #send_video('/dev/video'+str(1), server_address, server_port)

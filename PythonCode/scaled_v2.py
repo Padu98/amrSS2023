@@ -34,7 +34,7 @@ def send_video(index, address, port):
     while True:
         ret, frame = capture.read() 
         if ret:
-            frame = rescale_frame(frame, 10)
+            frame = rescale_frame(frame, 55)
             _, jpeg = cv2.imencode('.jpg', frame)  
             frame_bytes = jpeg.tobytes()
             with Image(blob=frame_bytes) as img:

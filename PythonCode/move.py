@@ -25,11 +25,30 @@ def connect_mqtt() -> mqtt_client:
 
 def subscribe(client: mqtt_client):
    def on_message(client, userdate, msg):
-     print(f'Nachricht: `{msg.payload.decode()}`')
+     #print(f'Nachricht: `{msg.payload.decode()}`')
      message = json.loads(msg.payload.decode())
      #todo pruefen ob key vorhanden
-     move(message['vertical'] * abs(5.69))  #5.69 = 1024/180 muss noch abs machen
-     print(message)  
+     #print("tawda")
+     #test = "vertical" in message
+     #print(test)
+     if "vertical" in message:
+        print("message vertical : " + str(message))
+        if message['vertical'] < -140 :
+            message['vertical'] = -140
+        if message['vertical'] > -40 :
+            message['vertical'] = -40
+        print(message['vertical'])
+        move(abs(1023+(int(message['vertical'] * 5.69))),3)  #5.69 = 1024/180 muss noch abs machen
+        #print(abs(1023+(int(message['vertical'] * 5.69))))
+     if "horizontal" in message:
+        #print('message:  ' + str(message['horizontal']))
+        if message['horizontal'] > 180 and message['horizontal'] < 270:
+            message['horizontal'] = 179
+        elif message['horizontal'] > 270:
+            message['horizontal'] = 0
+        #print(message)
+        move(abs((int(message['horizontal'] *5.69))),2)  #5.69 = 1024/180 muss noch abs machen
+        #print(abs((int(message['horizontal'] * 5.69))))
    client.subscribe(topic)
    client.on_message = on_message
 
@@ -41,27 +60,25 @@ def run():
   
 
         
-def move(position):
+def move(position,ID):
     # Write goal position
-    dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, DXL_ID, ADDR_MX_GOAL_POSITION, position)
+    dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, ID, ADDR_MX_GOAL_POSITION, position)
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
     elif dxl_error != 0:
         print("%s" % packetHandler.getRxPacketError(dxl_error))
     while 1:
-        test = random.randint(0,200)
         # Read present position
-        dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DXL_ID, test)
+        dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, ID, ADDR_MX_PRESENT_POSITION)
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
         elif dxl_error != 0:
             print("%s" % packetHandler.getRxPacketError(dxl_error))
 
-        print('test')
-        print("[ID:%03d] GoalPos:%03d  PresPos:%03d" % (DXL_ID, test, dxl_present_position))
+        print("[ID:%03d] GoalPos:%03d  PresPos:%03d" % (ID, position, dxl_present_position))
         break
 
-        if not abs(dxl_goal_position[index] - dxl_present_position) > DXL_MOVING_STATUS_THRESHOLD:
+        if not abs(position - dxl_present_position) > DXL_MOVING_STATUS_THRESHOLD:
             break
         
 
@@ -83,8 +100,8 @@ DEVICENAME                  = '/dev/ttyUSB1'    # Check which port is being used
 
 TORQUE_ENABLE               = 1                 # Value for enabling the torque
 TORQUE_DISABLE              = 0                 # Value for disabling the torque
-DXL_MINIMUM_POSITION_VALUE  = 200           # Dynamixel will rotate between this value
-DXL_MAXIMUM_POSITION_VALUE  = 800            # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
+DXL_MINIMUM_POSITION_VALUE  = 0           # Dynamixel will rotate between this value
+DXL_MAXIMUM_POSITION_VALUE  = 0            # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
 DXL_MOVING_STATUS_THRESHOLD = 20                # Dynamixel moving status threshold
 
 index = 0
@@ -145,51 +162,6 @@ if __name__ == '__main__':
         print("%s" % packetHandler.getRxPacketError(dxl_error))
     else:
         print("Dynamixel has been successfully connected")
-    
-
-
-while True:
-    #print("Press any key to continue! (or press ESC to quit!)")
-    #if getch() == chr(0x1b):
-    #   break
-    # Write goal position
-    dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, DXL_ID, ADDR_MX_GOAL_POSITION, dxl_goal_position[index])
-    if dxl_comm_result != COMM_SUCCESS:
-        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-    elif dxl_error != 0:
-        print("%s" % packetHandler.getRxPacketError(dxl_error))
-    #test =1000
-    #time.sleep(3)
-    while 1:
-        test = random.randint(0,200)
-        # Read present position
-        dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DXL_ID, test)
-        if dxl_comm_result != COMM_SUCCESS:
-            print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-        elif dxl_error != 0:
-            print("%s" % packetHandler.getRxPacketError(dxl_error))
-
-        print('test')
-        print("[ID:%03d] GoalPos:%03d  PresPos:%03d" % (DXL_ID, test, dxl_present_position))
-        break
-
-        if not abs(dxl_goal_position[index] - dxl_present_position) > DXL_MOVING_STATUS_THRESHOLD:
-            break
-        
-    time.sleep(0.5)
-    # Change goal position
-    if index == 0:
-        index = 1
-    else:
-        index = 0
-
-
-# Disable Dynamixel Torque
-dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, DXL_ID, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
-if dxl_comm_result != COMM_SUCCESS:
-    print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-elif dxl_error != 0:
-    print("%s" % packetHandler.getRxPacketError(dxl_error))
-
 # Close port
-portHandler.closePort()
+    run()
+    portHandler.closePort()

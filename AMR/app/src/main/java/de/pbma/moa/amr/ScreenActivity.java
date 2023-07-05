@@ -31,7 +31,9 @@ public class ScreenActivity extends AppCompatActivity {
     private Button startButton;
     private Button settingsButton;
     private SurfaceView surfaceView;
+    private SurfaceView surfaceView2;
     private SurfaceHolder surfaceHolder;
+    private SurfaceHolder surfaceHolder2;
     private SensorHelper sensorHelper;
 
 
@@ -45,37 +47,67 @@ public class ScreenActivity extends AppCompatActivity {
         }
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
         isStreaming = false;
         screenHelper = new ScreenHelper();
-        startButton = findViewById(R.id.start_button);
-        settingsButton = findViewById(R.id.settings_button);
+        //startButton = findViewById(R.id.start_button);
+       // settingsButton = findViewById(R.id.settings_button);
 
-        settingsButton.setOnClickListener(v ->{
+       /* settingsButton.setOnClickListener(v ->{
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
-        });
+        });*/
+
         surfaceView = findViewById(R.id.surfaceView);
+        surfaceView2 = findViewById(R.id.surfaceView2);
+
         surfaceHolder = surfaceView.getHolder();
-        startButton.setOnClickListener(listener);
+        surfaceHolder2 = surfaceView2.getHolder();
+
+        surfaceView.setOnLongClickListener(v -> {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        });
+        surfaceView2.setOnLongClickListener(v -> {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        });
+        surfaceView.setOnClickListener(listener);
+        surfaceView2.setOnClickListener(listener);
+
+        //startButton.setOnClickListener(listener);
+
+        sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(sensorHelper!=null){
+            sensorHelper.unregisterSensorListener();
+        }
+    }
 
     private final View.OnClickListener listener = v -> start();
 
     private void start() {
         if (isStreaming) {
-            sensorHelper = null;
             Toast.makeText(this, "stop", Toast.LENGTH_LONG).show();
             isStreaming = false;
-            startButton.setText("start");
+            //startButton.setText("start");
+            if(sensorHelper!=null){
+                sensorHelper.unregisterSensorListener();
+            }
             if (socket != null) {
                 socket.close();
             }
         } else {
-            sensorHelper = new SensorHelper((SensorManager) getSystemService(Context.SENSOR_SERVICE), this);
             isStreaming = true;
-            startButton.setText("stop");
+            //startButton.setText("stop");
+            if(sensorHelper!=null){
+                sensorHelper.registerSensorListener();
+            }
             new Thread(() -> {
                 this.runOnUiThread(() -> {
                     Toast.makeText(this, "start", Toast.LENGTH_SHORT).show();
@@ -119,17 +151,20 @@ public class ScreenActivity extends AppCompatActivity {
         int surfaceViewHeight = surfaceView.getHeight();
         runOnUiThread(() -> {
             Canvas canvas = surfaceHolder.lockCanvas();
+            Canvas canvas2 = surfaceHolder2.lockCanvas();
             if(canvas!=null){
                 try {
                     Bitmap bitmap = BitmapFactory.decodeByteArray(array, 0, array.length);
                     bitmap = Bitmap.createScaledBitmap(bitmap, surfaceViewWidth, surfaceViewHeight, true);
                     if (bitmap != null) {
                         canvas.drawBitmap(bitmap, 0, 0, null);
+                        canvas2.drawBitmap(bitmap, 0, 0, null);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
                     surfaceHolder.unlockCanvasAndPost(canvas);
+                    surfaceHolder2.unlockCanvasAndPost(canvas2);
                 }
             }
         });

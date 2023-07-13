@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -23,7 +25,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 public class ScreenActivity extends AppCompatActivity {
-    private static final int CHUNK_SIZE = 1024;
+    private static final int CHUNK_SIZE = 64000; //oder 64
     private DatagramSocket socket;
     private byte[] frameBytes;
     private boolean isStreaming;
@@ -39,6 +41,9 @@ public class ScreenActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        this.supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.stream_layout);
         ActionBar actionBar = getSupportActionBar();
@@ -118,6 +123,7 @@ public class ScreenActivity extends AppCompatActivity {
     }
 
     private void receiveVideo() {
+        boolean show = false;
         try {
             socket = new DatagramSocket(5000);
             byte[] buffer = new byte[CHUNK_SIZE];
@@ -126,16 +132,25 @@ public class ScreenActivity extends AppCompatActivity {
             while (isStreaming) {
                 socket.receive(packet);
                 byte[] chunk = packet.getData();
+                if(screenHelper.startsWithDel(chunk)){
+                    chunk = screenHelper.removeDel(chunk);
+                    show = true;
+                }
                 try {
                     frameBytes = screenHelper.concatenateByteArrays(frameBytes, chunk);
                 } catch (IOException ignored) {
                 }
-                int indexDel = screenHelper.containsDelimiter(frameBytes);
-                if (indexDel > -1) {
+                if(show){
+                    showVideoFrameSec(frameBytes);
+                    frameBytes = new byte[0];
+                    show = false;
+                }
+                //int indexDel = screenHelper.containsDelimiter(frameBytes);
+                /*if (indexDel > -1) {
                     ScreenHelper.SplitResult frameChunks = ScreenHelper.getArrays(frameBytes, indexDel);
                     showVideoFrameSec(frameChunks.getFirstPart());
                     frameBytes = new byte[0];
-                }
+                }*/
             }
             socket.close();
         } catch (Exception e) {

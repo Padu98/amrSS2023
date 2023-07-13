@@ -4,12 +4,15 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
     <SurfaceView
+        android:background="@drawable/new_back"
         android:id="@+id/surfaceView"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_weight="1" >
     </SurfaceView>
+
     <SurfaceView
+        android:background="@drawable/new_back"
         android:id="@+id/surfaceView2"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

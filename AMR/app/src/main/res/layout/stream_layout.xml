@@ -2,9 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:background="#000000">
     <SurfaceView
-        android:background="@drawable/new_back"
         android:id="@+id/surfaceView"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -12,7 +12,6 @@
     </SurfaceView>
 
     <SurfaceView
-        android:background="@drawable/new_back"
         android:id="@+id/surfaceView2"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

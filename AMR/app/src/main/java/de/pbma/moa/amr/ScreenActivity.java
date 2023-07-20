@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -37,6 +38,7 @@ public class ScreenActivity extends AppCompatActivity {
     private SurfaceHolder surfaceHolder;
     private SurfaceHolder surfaceHolder2;
     private SensorHelper sensorHelper;
+    private long time = 0;
 
 
     @Override
@@ -130,6 +132,9 @@ public class ScreenActivity extends AppCompatActivity {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             frameBytes = new byte[0];
             while (isStreaming) {
+                if(time == 0){
+                    time = System.currentTimeMillis();
+                }
                 socket.receive(packet);
                 byte[] chunk = packet.getData();
                 if(screenHelper.startsWithDel(chunk)){
@@ -173,7 +178,11 @@ public class ScreenActivity extends AppCompatActivity {
                     bitmap = Bitmap.createScaledBitmap(bitmap, surfaceViewWidth, surfaceViewHeight, true);
                     if (bitmap != null) {
                         canvas.drawBitmap(bitmap, 0, 0, null);
+                        Log.e("Test", "delta1: " + (System.currentTimeMillis() - time));
                         canvas2.drawBitmap(bitmap, 0, 0, null);
+                        Log.e("Test", "delta2: " + (System.currentTimeMillis() - time));
+                        Log.e("Test", "##################################################");
+                        time = 0;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
